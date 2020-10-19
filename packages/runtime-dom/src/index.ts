@@ -46,18 +46,21 @@ export const render = ((...args) => {
   ensureRenderer().render(...args)
 }) as RootRenderFunction<Element>
 
+// https://ssr.vuejs.org/zh/guide/hydration.html ssr客户端激活的场景
 export const hydrate = ((...args) => {
   ensureHydrationRenderer().hydrate(...args)
 }) as RootHydrateFunction
 
 export const createApp = ((...args) => {
+  // app将会通过packages\runtime-core\src\apiCreateApp.ts createAppAPI方法来创建
   const app = ensureRenderer().createApp(...args)
 
   if (__DEV__) {
     injectNativeTagCheck(app)
   }
-
+  // 缓存标准mount方法
   const { mount } = app
+  // 进行按不同平台进行重写mount方法
   app.mount = (containerOrSelector: Element | string): any => {
     const container = normalizeContainer(containerOrSelector)
     if (!container) return
@@ -67,6 +70,7 @@ export const createApp = ((...args) => {
     }
     // clear content before mounting
     container.innerHTML = ''
+    // 调用原来的
     const proxy = mount(container)
     container.removeAttribute('v-cloak')
     container.setAttribute('data-v-app', '')

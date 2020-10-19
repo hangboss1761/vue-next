@@ -443,6 +443,7 @@ function baseCreateRenderer(
 
   // Note: functions inside this closure should use `const xxx = () => {}`
   // style in order to prevent being inlined by minifiers.
+  // 第一次patch n1 = null ,n2 = rootComonent的子树vnode
   const patch: PatchFn = (
     n1,
     n2,
@@ -1353,6 +1354,7 @@ function baseCreateRenderer(
         if (__DEV__) {
           startMeasure(instance, `render`)
         }
+        // 执行 render 函数创建整个组件树内部的 vnode
         const subTree = (instance.subTree = renderComponentRoot(instance))
         if (__DEV__) {
           endMeasure(instance, `render`)
@@ -1413,8 +1415,8 @@ function baseCreateRenderer(
         instance.isMounted = true
       } else {
         // updateComponent
-        // This is triggered by mutation of component's own state (next: null)
-        // OR parent calling processComponent (next: VNode)
+        // This is triggered by mutation of component's own state (next: null) 触发场景1：组件自身state发生变化，此时next为null
+        // OR parent calling processComponent (next: VNode) 触发场景2：父组件更新时调用processComponent，此时next为父组件VNode
         let { next, bu, u, parent, vnode } = instance
         let originNext = next
         let vnodeHook: VNodeHook | null | undefined
@@ -1422,9 +1424,12 @@ function baseCreateRenderer(
           pushWarningContext(next || instance.vnode)
         }
 
+        // next表示新组件的vnode,组件自身state发生变化时next为null
         if (next) {
+          // 更新组件 vnode 节点信息
           updateComponentPreRender(instance, next, optimized)
         } else {
+          // 直接将当前vode作为next
           next = vnode
         }
         next.el = vnode.el
@@ -1442,11 +1447,14 @@ function baseCreateRenderer(
         if (__DEV__) {
           startMeasure(instance, `render`)
         }
+        // 渲染新的子树 vnode
         const nextTree = renderComponentRoot(instance)
         if (__DEV__) {
           endMeasure(instance, `render`)
         }
+        // 缓存旧的子树 vnode
         const prevTree = instance.subTree
+        // 更新子树 vnode
         instance.subTree = nextTree
 
         // reset refs
@@ -2202,9 +2210,11 @@ function baseCreateRenderer(
   const render: RootRenderFunction = (vnode, container) => {
     if (vnode == null) {
       if (container._vnode) {
+        // 销毁组件
         unmount(container._vnode, null, null, true)
       }
     } else {
+      // 创建或者更新组件
       patch(container._vnode || null, vnode, container)
     }
     flushPostFlushCbs()

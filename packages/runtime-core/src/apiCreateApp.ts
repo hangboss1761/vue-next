@@ -111,6 +111,7 @@ export type CreateAppFunction<HostElement> = (
 
 let uid = 0
 
+// 创建APP
 export function createAppAPI<HostElement>(
   render: RootRenderFunction,
   hydrate?: RootHydrateFunction
@@ -209,15 +210,17 @@ export function createAppAPI<HostElement>(
         context.directives[name] = directive
         return app
       },
-
+      // 各平台通用的标准mount方法, 运行各平台createApp方法时会基于这个标准的mount方法来进行重写
       mount(rootContainer: HostElement, isHydrate?: boolean): any {
         if (!isMounted) {
+          // 关键流程：创建vnode
           const vnode = createVNode(
             rootComponent as ConcreteComponent,
             rootProps
           )
           // store app context on the root VNode.
           // this will be set on the root instance on initial mount.
+          // 保存app context到root vnode
           vnode.appContext = context
 
           // HMR root reload
@@ -230,17 +233,19 @@ export function createAppAPI<HostElement>(
           if (isHydrate && hydrate) {
             hydrate(vnode as VNode<Node, Element>, rootContainer as any)
           } else {
+            // 关键流程：渲染vnode packages\runtime-core\src\renderer.ts 中定义了render方法
             render(vnode, rootContainer)
           }
           isMounted = true
           app._container = rootContainer
           // for devtools and telemetry
+          // 特别注意：将app挂到更根节点上
           ;(rootContainer as any).__vue_app__ = app
 
           if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
             devtoolsInitApp(app, version)
           }
-
+          // 返回root vnode对应的ComponentInternalInstance
           return vnode.component!.proxy
         } else if (__DEV__) {
           warn(

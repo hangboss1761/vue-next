@@ -1,0 +1,68 @@
+<!-- <script src="../../dist/vue.global.js"></script> -->
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.0/vue.global.prod.js"></script>
+
+<div id="demo">
+  <h1>Vue渲染过程</h1>
+  <p>{{currentBranch}}</p>
+  <button @click="handleBranchClick">change branch</button>
+  <child-comp :parent-msg="currentBranch"/>
+</div>
+
+<script>
+const { createApp, ref, watchEffect, getCurrentInstance } = Vue
+
+const ChildComp = {
+  template: `
+    <div>
+      <h1>{{msg}}</h1>
+      <h2>parentMsg: {{parentMsg}}</h2>
+      <button @click="handleClick">click</button>
+    </div>
+  `,
+  props: {
+    parentMsg: String
+  },
+  mounted () {
+    console.log('guoyuhang this: ', this)
+    console.log('guoyuhang this.$el: ', this.$el)
+    console.log('guoyuhang this.parentMsg: ', this.parentMsg)
+  },
+  setup(props, ctx) {
+    const ctx1 = getCurrentInstance()
+    console.log('guoyuhang ctx1: ', ctx1)
+
+    console.log('guoyuhang props: ', props)
+    console.log('guoyuhang ctx: ', ctx)
+    const msg = ref('hello')
+    const handleClick = () => {
+      msg.value = 'guoyuhang'
+    }
+    return {
+      msg: msg,
+      handleClick
+    }
+  }
+}
+createApp({
+  components: {
+    ChildComp
+  },
+  setup() {
+    const currentBranch = ref('master')
+    const handleBranchClick = () => {
+      currentBranch.value = 'dev'
+    }
+
+    return {
+      currentBranch,
+      handleBranchClick,
+    }
+  }
+}).mount('#demo')
+</script>
+
+<style>
+  #demo {
+    font-family: 'Helvetica', Arial, sans-serif;
+  }
+</style>
